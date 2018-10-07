@@ -88,7 +88,7 @@
 							</descriptorRefs>
 							<archive>
 								<manifest>
-									<mainClass>net.mixaal.poc.kotlin.HelloKt</mainClass>
+									<mainClass>net.mixaal.poc.java.Hello</mainClass>
 								</manifest>
 							</archive>
 						</configuration>
