@@ -1,5 +1,11 @@
 # Golang Restful example
 
+## Get gorilla/mux
+
+```
+go get github.com/gorilla/mux
+```
+
 ## Compile and run
 
 ```
