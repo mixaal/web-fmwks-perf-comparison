@@ -37,7 +37,7 @@ mvn clean package
 ## Create native image
 
 ```
-native-image -cp ./target/kotlin-rest-service-1.0-SNAPSHOT-jar-with-dependencies.jar -H:Name=kotlin-rest -H:Class=net.mixaal.poc.kotlin.HelloKt  -H:+JNI
+native-image -cp ./target/kotlin-rest-service-1.0-SNAPSHOT-jar-with-dependencies.jar -H:Name=kotlin-rest -H:Class=net.mixaal.poc.kotlin.HelloKt  -H:+JNI  -H:ReflectionConfigurationFiles=$(pwd)/*json
 ```
 
 ## Run and setup the service
