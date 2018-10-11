@@ -1,5 +1,6 @@
 package net.mixaal.poc.javaulfius;
 
+import org.graalvm.nativeimage.Isolate;
 import org.graalvm.nativeimage.IsolateThread;
 import org.graalvm.nativeimage.StackValue;
 import org.graalvm.nativeimage.c.CContext;
@@ -66,6 +67,10 @@ public class JavaUlfius {
         @CFunction
         static native int ulfius_clean_instance(Instance instance);
 
+
+        @CFunction
+        static native int ulfius_set_string_body_response(Response response, int status, CCharPointer body);
+
         @CFunction
         static native int ulfius_add_endpoint_by_val(
                 Instance instance,
@@ -116,15 +121,17 @@ public class JavaUlfius {
     }
 
     @CEntryPoint
-    private static int callback_hello_world(IsolateThread isolateThread, Ulfius.Request request, Ulfius.Response response, Pointer userData) {
-        System.out.println("hello");
-        return Ulfius.U_CALLBACK_CONTINUE();
+    private static int callback_hello_world(Isolate isolate, Ulfius.Request request, Ulfius.Response response, Pointer userData) {
+        try (CTypeConversion.CCharPointerHolder responseBody= CTypeConversion.toCString("hello")) {
+            Ulfius.ulfius_set_string_body_response(response, 200, responseBody.get());
+            return Ulfius.U_CALLBACK_CONTINUE();
+        }
     }
 
     private static final CEntryPointLiteral<Ulfius.Handler> handlerInstance =
             CEntryPointLiteral.create(JavaUlfius.class,
                     "callback_hello_world",
-                    IsolateThread.class,
+                    Isolate.class,
                     Ulfius.Request.class,
                     Ulfius.Response.class,
                     Pointer.class
@@ -136,7 +143,7 @@ public class JavaUlfius {
         System.out.printf("init result: %d status=%d port=%d nb_epts=%d\n", initPhaseResult, instance.status(), instance.port(), instance.nb_endpoints());
 
 
-        IsolateThread currentThread = CEntryPointContext.getCurrentIsolateThread();
+        Isolate currentInstance = CEntryPointContext.getCurrentIsolate();
         /* Call a C function directly. */
 //        callback_hello_world(currentThread, WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer());
         /* Call a C function indirectly via function pointer. */

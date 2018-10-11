@@ -14,6 +14,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<junit.version>4.12</junit.version>
 		<native.image>${java.home}/bin/native-image</native.image>
+		<native.debug>-Dignore=</native.debug>
 	</properties>
 
 	<dependencies>
@@ -50,6 +51,8 @@
                         <configuration>
                             <executable>${native.image}</executable>
                             <arguments>
+								<argument>${native.debug}</argument>
+								<argument>-H:+MultiThreaded</argument>
                                 <argument>-H:Name=${project.build.directory}/javaulfius</argument>
                                 <argument>-cp</argument>
                                 <classpath/>
