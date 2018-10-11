@@ -138,9 +138,9 @@ public class JavaUlfius {
 
         IsolateThread currentThread = CEntryPointContext.getCurrentIsolateThread();
         /* Call a C function directly. */
-        callback_hello_world(currentThread, WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer());
+//        callback_hello_world(currentThread, WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer());
         /* Call a C function indirectly via function pointer. */
-        handlerInstance.getFunctionPointer().invoke(currentThread,WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer() );
+//        handlerInstance.getFunctionPointer().invoke(currentThread,WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer() );
 
 
         try (

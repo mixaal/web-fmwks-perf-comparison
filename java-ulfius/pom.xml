@@ -13,6 +13,7 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<junit.version>4.12</junit.version>
+		<native.image>${java.home}/bin/native-image</native.image>
 	</properties>
 
 	<dependencies>
@@ -34,6 +35,33 @@
 		<testSourceDirectory>src/test/java</testSourceDirectory>
 
 		<plugins>
+
+			 <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>1.6.0</version>
+                <executions>
+                    <execution>
+                        <id>native-image</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${native.image}</executable>
+                            <arguments>
+                                <argument>-H:Name=${project.build.directory}/javaulfius</argument>
+                                <argument>-cp</argument>
+                                <classpath/>
+								<argument>net.mixaal.poc.javaulfius.JavaUlfius</argument>
+
+							</arguments>
+                        </configuration>
+                    </execution>
+				</executions>
+			 </plugin>
+
+
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
