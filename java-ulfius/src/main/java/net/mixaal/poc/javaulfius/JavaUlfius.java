@@ -24,6 +24,14 @@ public class JavaUlfius {
     public static final class Ulfius  {
         @CStruct(value = "_u_instance", addStructKeyword = true)
         interface Instance extends PointerBase {
+            @CField
+            int port();
+
+            @CField
+            int status();
+
+            @CField
+            int nb_endpoints();
 
         }
 
@@ -60,6 +68,7 @@ public class JavaUlfius {
 
         @CFunction
         static native int ulfius_add_endpoint_by_val(
+                Instance instance,
                 CCharPointer httpMethod,
                 CCharPointer prefix,
                 CCharPointer format,
@@ -121,22 +130,39 @@ public class JavaUlfius {
                     Pointer.class
             );
 
-    public static void main(String []args) {
+    public static void main(String []args) throws Exception {
         Ulfius.Instance instance  = StackValue.get(Ulfius.Instance.class);
         int initPhaseResult = Ulfius.ulfius_init_instance(instance, 8080, WordFactory.nullPointer(), WordFactory.nullPointer());
-        System.out.printf("init result: %d\n", initPhaseResult);
-        Ulfius.ulfius_add_endpoint_by_val(
-                CTypeConversion.toCString("GET").get(),
-                CTypeConversion.toCString("/helloworld").get(),
-                WordFactory.nullPointer(),
-                0,
-                handlerInstance.getFunctionPointer(),
-                WordFactory.nullPointer()
-        );
-        int result = Ulfius.ulfius_start_framework(instance);
-        System.out.printf("U_OK()=%d result=%d\n", Ulfius.U_OK(), result);
-        Ulfius.ulfius_stop_framework(instance);
-        Ulfius.ulfius_clean_instance(instance);
+        System.out.printf("init result: %d status=%d port=%d nb_epts=%d\n", initPhaseResult, instance.status(), instance.port(), instance.nb_endpoints());
+
+
+        IsolateThread currentThread = CEntryPointContext.getCurrentIsolateThread();
+        /* Call a C function directly. */
+        callback_hello_world(currentThread, WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer());
+        /* Call a C function indirectly via function pointer. */
+        handlerInstance.getFunctionPointer().invoke(currentThread,WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer() );
+
+
+        try (
+                CTypeConversion.CCharPointerHolder method=CTypeConversion.toCString("GET");
+                CTypeConversion.CCharPointerHolder path=CTypeConversion.toCString("/helloworld")){
+
+            int registrationResult = Ulfius.ulfius_add_endpoint_by_val(
+                    instance,
+                    method.get(),
+                    path.get(),
+                    WordFactory.nullPointer(),
+                    0,
+                    handlerInstance.getFunctionPointer(),
+                    WordFactory.nullPointer()
+            );
+            System.out.printf("registration result: %d status=%d port=%d nb_epts=%d\n", registrationResult, instance.status(), instance.port(), instance.nb_endpoints());
+            int result = Ulfius.ulfius_start_framework(instance);
+            System.out.printf("U_OK()=%d result=%d\n", Ulfius.U_OK(), result);
+            System.in.read();
+            Ulfius.ulfius_stop_framework(instance);
+            Ulfius.ulfius_clean_instance(instance);
+        }
     }
 
 
