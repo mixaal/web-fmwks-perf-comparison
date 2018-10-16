@@ -1,5 +1,9 @@
 package net.mixaal.poc.javaulfius;
 
+import com.oracle.svm.core.c.CGlobalData;
+import com.oracle.svm.core.c.CGlobalDataFactory;
+import com.oracle.svm.core.c.function.CEntryPointActions;
+import com.oracle.svm.core.c.function.CEntryPointOptions;
 import org.graalvm.nativeimage.Isolate;
 import org.graalvm.nativeimage.IsolateThread;
 import org.graalvm.nativeimage.StackValue;
@@ -119,22 +123,23 @@ public class JavaUlfius {
         }
     }
 
-    @CEntryPoint(builtin = CEntryPoint.Builtin.AttachThread)
-    private static int attachThread(Ulfius.Request request, Ulfius.Response response, Isolate userData) {
-        return Ulfius.U_CALLBACK_CONTINUE();
+    public static final class AttachThreadPrologue {
+
+        private static final CGlobalData<CCharPointer> errorMessage = CGlobalDataFactory.createCString(
+            "Failed to attach the thread.");
+
+        static void enter(Isolate isolate) {
+            int code = CEntryPointActions.enterAttachThread(isolate);
+            if (code != 0) {
+                CEntryPointActions.failFatally(code, errorMessage.get());
+            }
+        }
     }
 
-    private static final CEntryPointLiteral<Ulfius.Handler> attachInstance =
-            CEntryPointLiteral.create(JavaUlfius.class,
-                    "attachThread",
-                    Ulfius.Request.class,
-                    Ulfius.Response.class,
-                    Isolate.class
-            );
-
+    @CEntryPointOptions(prologue = AttachThreadPrologue.class)
     @CEntryPoint
-    private static int callback_hello_world(Isolate isolate, Ulfius.Request request, Ulfius.Response response, Pointer userData) {
-        try (CTypeConversion.CCharPointerHolder responseBody= CTypeConversion.toCString("hello")) {
+    private static int callback_hello_world(Ulfius.Request request, Ulfius.Response response, Isolate userData) {
+        try (CTypeConversion.CCharPointerHolder responseBody= CTypeConversion.toCString("hello\n")) {
             Ulfius.ulfius_set_string_body_response(response, 200, responseBody.get());
             return Ulfius.U_CALLBACK_CONTINUE();
         }
@@ -143,10 +148,9 @@ public class JavaUlfius {
     private static final CEntryPointLiteral<Ulfius.Handler> handlerInstance =
             CEntryPointLiteral.create(JavaUlfius.class,
                     "callback_hello_world",
-                    Isolate.class,
                     Ulfius.Request.class,
                     Ulfius.Response.class,
-                    Pointer.class
+                    Isolate.class
             );
 
     public static void main(String []args) throws Exception {
@@ -156,26 +160,11 @@ public class JavaUlfius {
 
 
         Isolate currentInstance = CEntryPointContext.getCurrentIsolate();
-        /* Call a C function directly. */
-//        callback_hello_world(currentThread, WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer());
-        /* Call a C function indirectly via function pointer. */
-//        handlerInstance.getFunctionPointer().invoke(currentThread,WordFactory.nullPointer(), WordFactory.nullPointer(), WordFactory.nullPointer() );
-
 
         try (
                 CTypeConversion.CCharPointerHolder method=CTypeConversion.toCString("GET");
                 CTypeConversion.CCharPointerHolder path=CTypeConversion.toCString("/helloworld")){
 
-            int attachResult = Ulfius.ulfius_add_endpoint_by_val(
-                    instance,
-                    method.get(),
-                    path.get(),
-                    WordFactory.nullPointer(),
-                    0,
-                    attachInstance.getFunctionPointer(),
-                    currentInstance
-            );
-            System.out.printf("attach result: %d\n", attachResult);
             int registrationResult = Ulfius.ulfius_add_endpoint_by_val(
                     instance,
                     method.get(),
@@ -183,7 +172,7 @@ public class JavaUlfius {
                     WordFactory.nullPointer(),
                     0,
                     handlerInstance.getFunctionPointer(),
-                    WordFactory.nullPointer()
+                    currentInstance
             );
             System.out.printf("registration result: %d status=%d port=%d nb_epts=%d\n", registrationResult, instance.status(), instance.port(), instance.nb_endpoints());
             int result = Ulfius.ulfius_start_framework(instance);

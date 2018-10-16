@@ -24,6 +24,13 @@
 			<version>1.0.0-rc7</version>
 		</dependency>
 		<dependency>
+			<groupId>org.graalvm</groupId>
+			<artifactId>svm-impl</artifactId>
+			<version>1.0.0-rc7</version>
+                        <scope>system</scope>
+                        <systemPath>${java.home}/lib/svm/builder/svm.jar</systemPath>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>${junit.version}</version>
