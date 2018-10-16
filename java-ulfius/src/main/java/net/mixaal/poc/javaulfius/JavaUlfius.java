@@ -10,7 +10,6 @@ import org.graalvm.nativeimage.c.struct.CField;
 import org.graalvm.nativeimage.c.struct.CStruct;
 import org.graalvm.nativeimage.c.type.CCharPointer;
 import org.graalvm.nativeimage.c.type.CTypeConversion;
-import org.graalvm.word.ComparableWord;
 import org.graalvm.word.Pointer;
 import org.graalvm.word.PointerBase;
 import org.graalvm.word.WordFactory;
@@ -79,7 +78,7 @@ public class JavaUlfius {
                 CCharPointer format,
                 int priority,
                 Handler handler,
-                Pointer userData
+                PointerBase userData
         );
 
         interface Handler extends CFunctionPointer {
@@ -115,10 +114,23 @@ public class JavaUlfius {
 
             @Override
             public List<String> getLibraries() {
-                return Arrays.asList("ulfius");
+                return Arrays.asList("ulfius", "microhttpd");
             }
         }
     }
+
+    @CEntryPoint(builtin = CEntryPoint.Builtin.AttachThread)
+    private static int attachThread(Ulfius.Request request, Ulfius.Response response, Isolate userData) {
+        return Ulfius.U_CALLBACK_CONTINUE();
+    }
+
+    private static final CEntryPointLiteral<Ulfius.Handler> attachInstance =
+            CEntryPointLiteral.create(JavaUlfius.class,
+                    "attachThread",
+                    Ulfius.Request.class,
+                    Ulfius.Response.class,
+                    Isolate.class
+            );
 
     @CEntryPoint
     private static int callback_hello_world(Isolate isolate, Ulfius.Request request, Ulfius.Response response, Pointer userData) {
@@ -154,6 +166,16 @@ public class JavaUlfius {
                 CTypeConversion.CCharPointerHolder method=CTypeConversion.toCString("GET");
                 CTypeConversion.CCharPointerHolder path=CTypeConversion.toCString("/helloworld")){
 
+            int attachResult = Ulfius.ulfius_add_endpoint_by_val(
+                    instance,
+                    method.get(),
+                    path.get(),
+                    WordFactory.nullPointer(),
+                    0,
+                    attachInstance.getFunctionPointer(),
+                    currentInstance
+            );
+            System.out.printf("attach result: %d\n", attachResult);
             int registrationResult = Ulfius.ulfius_add_endpoint_by_val(
                     instance,
                     method.get(),
