@@ -9,7 +9,7 @@ mvn clean package
 ## Build native image
 
 ```
-native-image -cp target/java-rest-service-1.0-SNAPSHOT-jar-with-dependencies.jar  -H:Name=helloworld -H:Class=net.mixaal.poc.java.Hello -H:+JNI
+native-image -cp target/java-rest-service-1.0-SNAPSHOT-jar-with-dependencies.jar  -H:Name=helloworld -H:Class=net.mixaal.poc.java.Hello
 ./helloworld
 ```
 
