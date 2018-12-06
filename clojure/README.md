@@ -2,8 +2,15 @@
 
 ## Get Leiningen
 
+### Manual installation
+
+Follow install instructions on the project site:
+[Install](//leiningen.org/#install).
+
+### SDKMAN installation
+
 ```
-go get github.com/gorilla/mux
+sdk install leiningen
 ```
 
 ## Compile and run
