@@ -1,5 +1,5 @@
 language: c
-install: sudo apt-get install -y apache2-utils libulfius-dev  libmicrohttpd-dev
+install: sudo apt-get install -y apache2-utils
 
 jobs:
   include:
