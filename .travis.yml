@@ -1,0 +1,20 @@
+language: c
+install: sudo apt-get install -y ab
+
+jobs:
+  include:
+  - stage: Build java
+    os: linux
+    jdk: oraclejdk8
+    script:
+      - mvn clean install
+  - stage: Build plain C
+    os: linux
+    script:
+      - make clean; make
+
+
+
+
+
+
